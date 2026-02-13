@@ -22,6 +22,7 @@ interface GameState {
 
   // 游戏状态
   isMusicPlaying: boolean;
+  wasMusicPlayingBeforeVideo: boolean;
 
   // Actions
   movePlayer: (x: number, y: number) => void;
@@ -46,14 +47,25 @@ export const useGameStore = create<GameState>((set) => ({
   activeModal: null,
   modalObjectId: null,
 
-  isMusicPlaying: false,
+  isMusicPlaying: true,
+  wasMusicPlayingBeforeVideo: false,
 
   movePlayer: (x, y) => set({ playerX: x, playerY: y }),
   setDirection: (dir) => set({ direction: dir }),
   setIsMoving: (moving) => set({ isMoving: moving }),
   nextAnimFrame: () => set((s) => ({ animFrame: (s.animFrame + 1) % 4 })),
   setNearbyObject: (id) => set({ nearbyObject: id }),
-  openModal: (type, objectId) => set({ activeModal: type, modalObjectId: objectId ?? null }),
-  closeModal: () => set({ activeModal: null, modalObjectId: null }),
+  openModal: (type, objectId) => set((s) => ({
+    activeModal: type,
+    modalObjectId: objectId ?? null,
+    // 打开电视时自动暂停背景音乐
+    ...(type === 'video' ? { wasMusicPlayingBeforeVideo: s.isMusicPlaying, isMusicPlaying: false } : {}),
+  })),
+  closeModal: () => set((s) => ({
+    activeModal: null,
+    modalObjectId: null,
+    // 关闭电视后自动恢复背景音乐
+    ...(s.wasMusicPlayingBeforeVideo ? { isMusicPlaying: true, wasMusicPlayingBeforeVideo: false } : {}),
+  })),
   toggleMusic: () => set((s) => ({ isMusicPlaying: !s.isMusicPlaying })),
 }));

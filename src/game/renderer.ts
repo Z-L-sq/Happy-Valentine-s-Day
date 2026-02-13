@@ -38,48 +38,44 @@ export function renderForeground(
 
 // ==================== Y-Sort 场景渲染 ====================
 /**
- * 逐行 Y-sort 渲染: 将前景 tile 行与玩家按 Y 坐标交错绘制。
+ * 逐行 Y-sort 渲染: 将前景 tile 行与所有实体(玩家+NPC)按 Y 坐标交错绘制。
  *
- * 原理: 玩家的 "脚底 Y" (playerY + PLAYER_SIZE) 决定深度排序基准。
- * - 前景行的底边 Y <= 玩家脚底 → 先画前景行 (玩家在前景前面)
- * - 前景行的底边 Y > 玩家脚底  → 先画玩家 (前景遮挡玩家)
- *
- * 这样玩家向上走到桌子后面时被桌子遮挡，向下走到桌子前面时遮挡桌子。
+ * entities: 需要 Y-sort 的实体列表, 每个包含 footY 和 render 回调。
  */
+export interface YSortEntity {
+  footY: number;
+  render: (ctx: CanvasRenderingContext2D) => void;
+}
+
 export function renderSceneYSorted(
   ctx: CanvasRenderingContext2D,
   foregroundRows: (HTMLCanvasElement | null)[],
-  playerX: number,
-  playerY: number,
-  direction: Direction,
-  animFrame: number,
-  isMoving: boolean,
-  playerSprite?: HTMLImageElement | null
+  entities: YSortEntity[]
 ) {
-  // 玩家脚底 Y 作为深度基准
-  const playerFootY = playerY + PLAYER_SIZE;
-  let playerDrawn = false;
+  // 按 footY 排序实体
+  const sorted = [...entities].sort((a, b) => a.footY - b.footY);
+  let entityIdx = 0;
 
   for (let row = 0; row < foregroundRows.length; row++) {
     const rowCanvas = foregroundRows[row];
-    // 这一行 tile 的底边 Y (像素)
     const rowBottomY = (row + 1) * TILE_SIZE;
 
-    // 当到达第一个底边 > 玩家脚底的前景行时, 先画玩家
-    if (!playerDrawn && rowBottomY > playerFootY) {
-      renderPlayer(ctx, playerX, playerY, direction, animFrame, isMoving, playerSprite);
-      playerDrawn = true;
+    // 在这个前景行之前, 画出所有 footY <= rowBottomY 的实体
+    while (entityIdx < sorted.length && sorted[entityIdx].footY <= rowBottomY) {
+      sorted[entityIdx].render(ctx);
+      entityIdx++;
     }
 
-    // 画这一行前景 (如果有内容)
+    // 画这一行前景
     if (rowCanvas) {
       ctx.drawImage(rowCanvas, 0, row * TILE_SIZE);
     }
   }
 
-  // 如果玩家在所有前景行之下 (极端情况), 最后画
-  if (!playerDrawn) {
-    renderPlayer(ctx, playerX, playerY, direction, animFrame, isMoving, playerSprite);
+  // 画出剩余实体 (在所有前景行之下)
+  while (entityIdx < sorted.length) {
+    sorted[entityIdx].render(ctx);
+    entityIdx++;
   }
 }
 
@@ -131,10 +127,10 @@ const SPRITE_FRAME_W = 429;
 const SPRITE_FRAME_H = 583;
 /** 方向 → 精灵行映射: Down=0, Left=1, Right=2, Up=3 */
 const DIR_TO_SPRITE_ROW: Record<Direction, number> = {
-  [Direction.DOWN]:  0,
-  [Direction.LEFT]:  1,
+  [Direction.DOWN]: 0,
+  [Direction.LEFT]: 1,
   [Direction.RIGHT]: 2,
-  [Direction.UP]:    3,
+  [Direction.UP]: 3,
 };
 /** 行走动画帧序列: 列索引 0=站立, 1=左脚, 2=右脚 → 播放 0,1,0,2 */
 const WALK_ANIM_SEQUENCE = [0, 1, 0, 2];

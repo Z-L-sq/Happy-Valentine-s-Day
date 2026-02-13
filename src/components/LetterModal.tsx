@@ -1,17 +1,19 @@
 'use client';
 /**
- * 💌 信件模态框 — 展开信纸动画，显示手写体信
+ * 💌 信件模态框 — 展开信纸动画，显示手写体信（支持翻页）
  *
- * 在 src/config.ts 的 letterContent 中配置信的内容
+ * 在 src/config.ts 的 letterPages 中配置信的内容
  */
 import React, { useEffect, useState } from 'react';
-import { letterContent } from '@/config';
+import { letterPages } from '@/config';
 import { useGameStore } from '@/game/store';
 import { assetPath } from '@/basePath';
 
 export default function LetterModal() {
   const closeModal = useGameStore((s) => s.closeModal);
   const [isOpen, setIsOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const totalPages = letterPages.length;
 
   // 打开动画
   useEffect(() => {
@@ -23,10 +25,16 @@ export default function LetterModal() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowRight' || e.key === 'd') {
+        setPage((p) => Math.min(p + 1, totalPages - 1));
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'a') {
+        setPage((p) => Math.max(p - 1, 0));
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [closeModal]);
+  }, [closeModal, totalPages]);
 
   return (
     <div
@@ -87,9 +95,40 @@ export default function LetterModal() {
               {/* 信件内容 */}
               <div className="px-8 pb-6 pl-16">
                 <div className="font-letter text-[#4A3520] text-lg leading-[32px] whitespace-pre-line">
-                  {letterContent}
+                  {letterPages[page]}
                 </div>
               </div>
+
+              {/* 翻页指示器 */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 pb-4">
+                  <button
+                    onClick={() => setPage((p) => Math.max(p - 1, 0))}
+                    disabled={page === 0}
+                    className={`font-pixel text-xs px-2 py-1 rounded transition-colors
+                      ${page === 0
+                        ? 'text-[#D4A574]/40 cursor-not-allowed'
+                        : 'text-[#4A3520] hover:bg-[#D4A574]/30 active:translate-y-[1px]'
+                      }`}
+                  >
+                    ◀ 上一页
+                  </button>
+                  <span className="font-pixel text-xs text-[#4A3520]/60">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+                    disabled={page === totalPages - 1}
+                    className={`font-pixel text-xs px-2 py-1 rounded transition-colors
+                      ${page === totalPages - 1
+                        ? 'text-[#D4A574]/40 cursor-not-allowed'
+                        : 'text-[#4A3520] hover:bg-[#D4A574]/30 active:translate-y-[1px]'
+                      }`}
+                  >
+                    下一页 ▶
+                  </button>
+                </div>
+              )}
 
               {/* 底部装饰 */}
               <div className="flex justify-center pb-4">

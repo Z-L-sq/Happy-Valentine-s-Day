@@ -7,6 +7,7 @@
  * 3. WASD / 方向键移动 + 逐格碰撞检测
  * 4. E 键互动
  * 5. 氛围光照
+ * 6. NPC: 静态男孩 + 自主漫游猫咪 (Y-Sort 渲染)
  */
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import {
@@ -29,8 +30,24 @@ import {
   renderFrameOverlay,
   renderPromptBubble,
   renderAmbientLight,
+  renderPlayer,
 } from '@/game/renderer';
+import type { YSortEntity } from '@/game/renderer';
 import { loadAllResources, LoadedResources } from '@/game/sprites';
+import {
+  createStaticMan,
+  createCat,
+  updateCat,
+  renderManNPC,
+  renderCat,
+  getManFootY,
+  getCatFootY,
+  isPlayerNearMan,
+  renderHeartBubble,
+  HEART_BUBBLE_DURATION,
+  StaticNPC,
+  CatNPC,
+} from '@/game/npc';
 
 export default function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,14 +58,27 @@ export default function GameCanvas() {
   });
   const [loading, setLoading] = useState(true);
 
+  // NPC refs (mutable, not React state — updated every frame)
+  const manRef = useRef<StaticNPC | null>(null);
+  const catsRef = useRef<CatNPC[]>([]);
+  /** 爱心气泡剩余帧数 (>0 时显示) */
+  const heartTimerRef = useRef(0);
+
   const store = useGameStore;
 
   // ==================== 加载资源 ====================
   useEffect(() => {
-    loadAllResources(MAP_COLS, MAP_ROWS, TILE_SIZE).then((res) => {
+    Promise.all([
+      loadAllResources(MAP_COLS, MAP_ROWS, TILE_SIZE),
+      createStaticMan(),
+      createCat('bwcat', '/char/cat/bwcat.png', 8, 7),
+      createCat('ocat', '/char/cat/ocat.png', 18, 14),
+    ]).then(([res, man, bwcat, ocat]) => {
       resRef.current = res;
+      manRef.current = man;
+      catsRef.current = [bwcat, ocat];
       setLoading(false);
-      console.log('✅ 所有资源加载完毕, 背景已预渲染');
+      console.log('✅ 所有资源加载完毕, 背景已预渲染, NPC 已初始化');
     });
   }, []);
 
@@ -59,12 +89,17 @@ export default function GameCanvas() {
       keysRef.current.add(key);
 
       if (key === 'e' && !store.getState().activeModal) {
-        const nearby = findNearbyInteractable(
-          store.getState().playerX,
-          store.getState().playerY
-        );
-        if (nearby) {
-          store.getState().openModal(nearby.type, nearby.id);
+        // 先检测是否在男孩 NPC 附近 → 爱心互动
+        if (manRef.current && isPlayerNearMan(store.getState().playerX, store.getState().playerY, manRef.current)) {
+          heartTimerRef.current = HEART_BUBBLE_DURATION;
+        } else {
+          const nearby = findNearbyInteractable(
+            store.getState().playerX,
+            store.getState().playerY
+          );
+          if (nearby) {
+            store.getState().openModal(nearby.type, nearby.id);
+          }
         }
       }
     };
@@ -97,10 +132,10 @@ export default function GameCanvas() {
       let dy = 0;
       const keys = keysRef.current;
 
-      if (keys.has('w') || keys.has('arrowup'))    { dy = -PLAYER_SPEED; store.getState().setDirection(Direction.UP); }
-      if (keys.has('s') || keys.has('arrowdown'))   { dy = PLAYER_SPEED; store.getState().setDirection(Direction.DOWN); }
-      if (keys.has('a') || keys.has('arrowleft'))   { dx = -PLAYER_SPEED; store.getState().setDirection(Direction.LEFT); }
-      if (keys.has('d') || keys.has('arrowright'))   { dx = PLAYER_SPEED; store.getState().setDirection(Direction.RIGHT); }
+      if (keys.has('w') || keys.has('arrowup')) { dy = -PLAYER_SPEED; store.getState().setDirection(Direction.UP); }
+      if (keys.has('s') || keys.has('arrowdown')) { dy = PLAYER_SPEED; store.getState().setDirection(Direction.DOWN); }
+      if (keys.has('a') || keys.has('arrowleft')) { dx = -PLAYER_SPEED; store.getState().setDirection(Direction.LEFT); }
+      if (keys.has('d') || keys.has('arrowright')) { dx = PLAYER_SPEED; store.getState().setDirection(Direction.RIGHT); }
 
       if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
 
@@ -131,6 +166,14 @@ export default function GameCanvas() {
       store.getState().setNearbyObject(nearby?.id ?? null);
     }
 
+    // ---- 更新爱心气泡 ----
+    if (heartTimerRef.current > 0) heartTimerRef.current--;
+
+    // ---- 更新猫 AI ----
+    for (const cat of catsRef.current) {
+      updateCat(cat);
+    }
+
     // ---- 渲染 ----
     const s = store.getState();
     const res = resRef.current;
@@ -144,14 +187,34 @@ export default function GameCanvas() {
     // 2. 可互动物体高亮
     renderInteractableHighlights(ctx, s.nearbyObject, now);
 
-    // 3. Y-Sort 场景: 前景行与玩家按 Y 坐标交错绘制 (解决透视穿模)
-    renderSceneYSorted(
-      ctx,
-      res.foregroundRows,
-      s.playerX, s.playerY,
-      s.direction, s.animFrame, s.isMoving,
-      res.playerSprite
-    );
+    // 3. 构建 Y-Sort 实体列表
+    const entities: YSortEntity[] = [];
+
+    // 玩家实体
+    entities.push({
+      footY: s.playerY + PLAYER_SIZE,
+      render: (c) => renderPlayer(c, s.playerX, s.playerY, s.direction, s.animFrame, s.isMoving, res.playerSprite),
+    });
+
+    // 男孩 NPC
+    if (manRef.current) {
+      const man = manRef.current;
+      entities.push({
+        footY: getManFootY(man),
+        render: (c) => renderManNPC(c, man),
+      });
+    }
+
+    // 猫咪
+    for (const cat of catsRef.current) {
+      entities.push({
+        footY: getCatFootY(cat),
+        render: (c) => renderCat(c, cat),
+      });
+    }
+
+    // Y-Sort 场景: 前景行与所有实体按 Y 坐标交错绘制
+    renderSceneYSorted(ctx, res.foregroundRows, entities);
 
     // 3.5 房间框架覆盖层 (始终遮挡玩家)
     renderFrameOverlay(ctx, res.frameOverlay);
@@ -162,6 +225,24 @@ export default function GameCanvas() {
       if (obj) {
         renderPromptBubble(ctx, s.playerX + PLAYER_SIZE / 2, s.playerY - 10, obj.label, now);
       }
+    }
+
+    // 4.5 靠近男孩 NPC 时也显示提示
+    if (manRef.current && heartTimerRef.current <= 0 && !s.activeModal && isPlayerNearMan(s.playerX, s.playerY, manRef.current)) {
+      renderPromptBubble(ctx, s.playerX + PLAYER_SIZE / 2, s.playerY - 10, '互动', now);
+    }
+
+    // 4.6 爱心气泡 (两人同时冒出)
+    if (heartTimerRef.current > 0 && manRef.current) {
+      const progress = 1 - heartTimerRef.current / HEART_BUBBLE_DURATION;
+      // 玩家头顶
+      const playerHeadX = s.playerX + PLAYER_SIZE / 2;
+      const playerHeadY = s.playerY - 6;
+      renderHeartBubble(ctx, playerHeadX, playerHeadY, now, progress);
+      // 男孩头顶
+      const manHeadX = manRef.current.x + PLAYER_SIZE / 2;
+      const manHeadY = manRef.current.y - 6;
+      renderHeartBubble(ctx, manHeadX, manHeadY, now, progress);
     }
 
     // 5. 氛围光

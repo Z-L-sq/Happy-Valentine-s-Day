@@ -12,11 +12,16 @@ export default function GameHUD() {
   const toggleMusic = useGameStore((s) => s.toggleMusic);
   const nearbyObject = useGameStore((s) => s.nearbyObject);
 
+  // 预加载音频数据，消除首次播放延迟
+  useEffect(() => {
+    audioRef.current?.load();
+  }, []);
+
   // 播放/暂停音乐
   useEffect(() => {
     if (audioRef.current) {
       if (isMusicPlaying) {
-        audioRef.current.play().catch(() => {});
+        audioRef.current.play().catch(() => { });
       } else {
         audioRef.current.pause();
       }
