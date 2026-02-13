@@ -8,6 +8,8 @@
  * 前景被切成每行一条, 与玩家按 Y 坐标排序, 实现正确的透视遮挡。
  */
 
+import { assetPath } from '../basePath';
+
 // ==================== 类型 ====================
 export interface LoadedResources {
   background: HTMLCanvasElement | null;
@@ -111,10 +113,10 @@ export async function loadAllResources(
   tileSize: number
 ): Promise<LoadedResources> {
   const [bgImage, fgImage, frameImage, playerSprite] = await Promise.all([
-    loadImage('/sprites/background.png'),
-    loadImage('/sprites/foreground.png'),
-    loadImage('/sprites/frame.png'),
-    loadImage('/sprites/player.png'),
+    loadImage(assetPath('/sprites/background.png')),
+    loadImage(assetPath('/sprites/foreground.png')),
+    loadImage(assetPath('/sprites/frame.png')),
+    loadImage(assetPath('/sprites/player.png')),
   ]);
 
   console.log(

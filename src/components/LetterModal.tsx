@@ -7,6 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import { letterContent } from '@/config';
 import { useGameStore } from '@/game/store';
+import { assetPath } from '@/basePath';
 
 export default function LetterModal() {
   const closeModal = useGameStore((s) => s.closeModal);
@@ -42,9 +43,8 @@ export default function LetterModal() {
       >
         {/* 信封（初始状态） */}
         <div
-          className={`transition-all duration-500 ${
-            isOpen ? 'opacity-0 scale-y-0 h-0' : 'opacity-100'
-          }`}
+          className={`transition-all duration-500 ${isOpen ? 'opacity-0 scale-y-0 h-0' : 'opacity-100'
+            }`}
         >
           <div className="bg-[#D4A574] border-4 border-[#8B6914] rounded-lg p-8 text-center shadow-xl">
             <span className="text-4xl">💌</span>
@@ -56,15 +56,14 @@ export default function LetterModal() {
 
         {/* 信纸 */}
         <div
-          className={`transition-all duration-700 delay-200 ${
-            isOpen ? 'opacity-100' : 'opacity-0 scale-y-0'
-          }`}
+          className={`transition-all duration-700 delay-200 ${isOpen ? 'opacity-100' : 'opacity-0 scale-y-0'
+            }`}
         >
           {/* 信纸背景 */}
           <div
             className="relative rounded-lg shadow-2xl overflow-hidden"
             style={{
-              backgroundImage: `url('/sprites/letter.png')`,
+              backgroundImage: `url('${assetPath('/sprites/letter.png')}')`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}

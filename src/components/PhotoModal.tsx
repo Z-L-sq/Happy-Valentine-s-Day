@@ -9,6 +9,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { photoFrames } from '@/config';
 import { useGameStore } from '@/game/store';
+import { assetPath } from '@/basePath';
 
 export default function PhotoModal() {
   const closeModal = useGameStore((s) => s.closeModal);
@@ -22,7 +23,7 @@ export default function PhotoModal() {
   const rawEntry = photoFrames[objectId];
   const gallery = Array.isArray(rawEntry)
     ? rawEntry
-    : [rawEntry ?? { src: '/photos/photo1.jpg', caption: '一张照片' }];
+    : [rawEntry ?? { src: assetPath('/photos/photo1.jpg'), caption: '一张照片' }];
   const isGallery = gallery.length > 1;
   const frame = gallery[currentIndex] ?? gallery[0];
 
@@ -177,11 +178,10 @@ export default function PhotoModal() {
             {gallery.map((_, i) => (
               <div
                 key={i}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  i === currentIndex
+                className={`w-2 h-2 rounded-full transition-all ${i === currentIndex
                     ? 'bg-[#FFD700] scale-125'
                     : 'bg-white/30'
-                }`}
+                  }`}
               />
             ))}
           </div>

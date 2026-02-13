@@ -10,6 +10,8 @@
  *  修改下面的内容后，刷新页面即可看到效果。
  */
 
+import { assetPath } from './basePath';
+
 // ==================== 📚 书架 ====================
 // 靠近书架按 E，弹出像素风对话框逐字显示
 export const bookTexts: Record<string, string[]> = {
@@ -62,7 +64,7 @@ export const calendarMessage: string = '今天是属于我们的日子 💕\n\n�
 // ==================== 📺 视频 ====================
 // 靠近电视按 E，会播放视频
 // 把视频文件放在 public/videos/ 文件夹里
-export const videoSource: string = '/videos/our-video.mp4';
+export const videoSource: string = assetPath('/videos/our-video.mp4');
 export const videoTitle: string = '📺 我们的回忆';
 
 // ==================== 🎁 礼物 ====================
@@ -84,27 +86,27 @@ export const giftMessage: string[] = [
 type PhotoEntry = { src: string; caption: string };
 export const photoFrames: Record<string, PhotoEntry | PhotoEntry[]> = {
   photo1: {
-    src: '/photos/photo1.png',
+    src: assetPath('/photos/photo1.png'),
     caption: '一直用作手机壁纸的合照 📸',
   },
   photo2: {
-    src: '/photos/photo2.png',
+    src: assetPath('/photos/photo2.png'),
     caption: '看《ZOOTOPIA 2》的那天！ 🖼️',
   },
   photo3: {
-    src: '/photos/photo3.png',
+    src: assetPath('/photos/photo3.png'),
     caption: '这是我们去‘布城’的那天',
   },
   photo4: [
-    { src: '/photos/wall1.png', caption: '狼狈且开心的‘云顶之旅~’' },
-    { src: '/photos/wall2.png', caption: '周年纪念日的花花' },
-    { src: '/photos/wall3.png', caption: '可爱的小三花和可爱的她' },
-    { src: '/photos/wall4.png', caption: '非常美丽的一件裙子！' },
-    { src: '/photos/wall5.png', caption: '希腊女神裙配库洛米哈哈哈哈' },
-    { src: '/photos/wall6.png', caption: '去到你的城市' },
+    { src: assetPath('/photos/wall1.png'), caption: '狼狈且开心的‘云顶之旅~’' },
+    { src: assetPath('/photos/wall2.png'), caption: '周年纪念日的花花' },
+    { src: assetPath('/photos/wall3.png'), caption: '可爱的小三花和可爱的她' },
+    { src: assetPath('/photos/wall4.png'), caption: '非常美丽的一件裙子！' },
+    { src: assetPath('/photos/wall5.png'), caption: '希腊女神裙配库洛米哈哈哈哈' },
+    { src: assetPath('/photos/wall6.png'), caption: '去到你的城市' },
   ],
   map: {
-    src: '/photos/map.jpg',
+    src: assetPath('/photos/map.jpg'),
     caption: '我们的冒险地图 🗺️',
   },
 };
@@ -118,7 +120,7 @@ export const tableMessage: string = '可可化妆的地方 💄';
 
 // ==================== 🎵 背景音乐（可选） ====================
 // 把音乐文件放在 public/music/ 文件夹里
-export const bgmSource: string = '/music/bgm.mp3';
+export const bgmSource: string = assetPath('/music/bgm.mp3');
 
 // ==================== 🌍 地球仪标记点 ====================
 // 靠近地球仪按 E，打开像素风地球仪
