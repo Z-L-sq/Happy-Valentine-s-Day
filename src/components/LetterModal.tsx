@@ -1,0 +1,123 @@
+'use client';
+/**
+ * 💌 信件模态框 — 展开信纸动画，显示手写体信
+ *
+ * 在 src/config.ts 的 letterContent 中配置信的内容
+ */
+import React, { useEffect, useState } from 'react';
+import { letterContent } from '@/config';
+import { useGameStore } from '@/game/store';
+
+export default function LetterModal() {
+  const closeModal = useGameStore((s) => s.closeModal);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // 打开动画
+  useEffect(() => {
+    const timer = setTimeout(() => setIsOpen(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 键盘控制
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeModal();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [closeModal]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={closeModal}
+    >
+      <div
+        className={`relative max-w-[550px] w-[90vw] transition-all duration-700 ease-out origin-top
+          ${isOpen
+            ? 'opacity-100 scale-100 rotate-0'
+            : 'opacity-0 scale-y-0 -rotate-3'
+          }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 信封（初始状态） */}
+        <div
+          className={`transition-all duration-500 ${
+            isOpen ? 'opacity-0 scale-y-0 h-0' : 'opacity-100'
+          }`}
+        >
+          <div className="bg-[#D4A574] border-4 border-[#8B6914] rounded-lg p-8 text-center shadow-xl">
+            <span className="text-4xl">💌</span>
+            <p className="font-pixel text-sdv-dark text-xs mt-2">
+              点击打开信封...
+            </p>
+          </div>
+        </div>
+
+        {/* 信纸 */}
+        <div
+          className={`transition-all duration-700 delay-200 ${
+            isOpen ? 'opacity-100' : 'opacity-0 scale-y-0'
+          }`}
+        >
+          {/* 信纸背景 */}
+          <div
+            className="relative rounded-lg shadow-2xl overflow-hidden"
+            style={{
+              backgroundImage: `url('/sprites/letter.png')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            {/* 左侧红线 */}
+            <div className="absolute left-12 top-0 bottom-0 w-[2px] bg-red-300/40" />
+
+            {/* 信纸装饰边框 */}
+            <div className="border-4 border-[#D4A574] rounded-lg m-1">
+              {/* 顶部装饰 */}
+              <div className="flex justify-center pt-4 pb-2">
+                <div className="flex gap-1">
+                  {['💕', '✨', '💕'].map((e, i) => (
+                    <span key={i} className="text-lg animate-sparkle" style={{ animationDelay: `${i * 0.3}s` }}>
+                      {e}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 信件内容 */}
+              <div className="px-8 pb-6 pl-16">
+                <div className="font-letter text-[#4A3520] text-lg leading-[32px] whitespace-pre-line">
+                  {letterContent}
+                </div>
+              </div>
+
+              {/* 底部装饰 */}
+              <div className="flex justify-center pb-4">
+                <div className="flex gap-2">
+                  {['🌸', '💝', '🌸'].map((e, i) => (
+                    <span key={i} className="text-sm">{e}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 纸张折痕效果 */}
+            <div className="absolute top-1/3 left-0 right-0 h-[1px] bg-[#D4A574]/20" />
+            <div className="absolute top-2/3 left-0 right-0 h-[1px] bg-[#D4A574]/20" />
+          </div>
+
+          {/* 关闭按钮 */}
+          <button
+            onClick={closeModal}
+            className="mt-4 w-full font-pixel text-xs bg-sdv-dark text-sdv-cream py-2 rounded
+                     hover:bg-sdv-brown transition-colors border-2 border-sdv-brown
+                     active:translate-y-[1px]"
+          >
+            ✕ 合上信纸 (Esc)
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==================== Google Fonts Import ==================== */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Dancing+Script:wght@400;700&display=swap');
+
+/* ==================== 全局样式 ==================== */
+:root {
+  --sdv-brown: #8B6914;
+  --sdv-dark: #5C3A1E;
+  --sdv-cream: #F5E6C8;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #1a1a2e;
+}
+
+/* 像素风渲染 */
+canvas {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* ==================== 星星背景动画 ==================== */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.star {
+  position: fixed;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle var(--duration, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* ==================== 选中样式隐藏 ==================== */
+::selection {
+  background-color: #FFD700;
+  color: #5C3A1E;
+}
+
+/* ==================== 滚动条像素风 ==================== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #5C3A1E;
+}
+::-webkit-scrollbar-thumb {
+  background: #8B6914;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FFD700;
+}
+
+/* ==================== 像素字体回退 ==================== */
+.font-pixel {
+  font-family: 'Press Start 2P', monospace, cursive;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+
+.font-letter {
+  font-family: 'Dancing Script', cursive, serif;
+}
